@@ -1,0 +1,149 @@
+## making time series from spatial data
+
+# package 
+all_packages <- c("rstudioapi", "data.table","rgeos","rgdal", "plyr", "ggplot2", "stringr","maps")
+for(package in all_packages){
+  if (!require(package,character.only = TRUE)) {
+    install.packages(package)  
+  }
+  require(package,character.only = TRUE)
+}
+# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+
+gear=c("PS","LL")
+year=c("2016","2017")
+
+for(g in 1:2){
+  for(y in 1:2){
+    ## import AIS data
+    filename_ais <- paste0("seychelles_",gear[g],"_",year[y],"_ais_aggregated_trajectories_",year[y],"_01_01_",year[y],"_12_31_0_5deg_1month_SFA.csv")
+    filepath_ais <- paste0("output/trajectories_aggregation/",filename_ais)
+    dataset_ais <- read.csv(filepath_ais, header = T, sep = ",")
+    
+    ## import VMS data
+    filename_vms <- paste0("seychelles_",gear[g],"_",year[y],"_vms_aggregated_trajectories_",year[y],"_01_01_",year[y],"_12_31_0_5deg_1month_SFA.csv")
+    filepath_vms<- paste0("output/trajectories_aggregation/",filename_vms)
+    dataset_vms <- read.csv(filepath_vms, header = T, sep = ",")
+
+    ## Calculation of normalize distance and normalize surface by period
+    # remove existing normalize distance and normalize surface
+    list <- c("ndistance","nsurface")
+    dataset_ais <- data.table(dataset_ais)
+    dataset_vms <- data.table(dataset_vms)
+    dataset_ais <- dataset_ais[, -list, with=F]
+    dataset_vms <- dataset_vms[, -list, with=F]
+    
+    # split data by period
+    split_data_ais <- split(dataset_ais, dataset_ais$time_start)
+    split_data_vms <- split(dataset_vms, dataset_vms$time_start)
+    # calculation of normalize distance by period
+    ndistance_ais <- lapply(lapply(split_data_ais, "[[", "distance"), function(x) (x-min(x,na.rm=T))/(max(x,na.rm=T)-min(x,na.rm=T)))
+    ndistance_vms <- lapply(lapply(split_data_vms, "[[", "distance"), function(x) (x-min(x,na.rm=T))/(max(x,na.rm=T)-min(x,na.rm=T)))
+    # calculation of normalize surface by period
+    nsurface_ais <- lapply(lapply(split_data_ais, "[[", "surface"), function(x) (x-min(x,na.rm=T))/(max(x,na.rm=T)-min(x,na.rm=T)))
+    nsurface_vms <- lapply(lapply(split_data_vms, "[[", "surface"), function(x) (x-min(x,na.rm=T))/(max(x,na.rm=T)-min(x,na.rm=T)))
+    
+    cbind_split_data_ais <- mapply( cbind,split_data_ais,ndistance= ndistance_ais,nsurface=nsurface_ais , SIMPLIFY = F )
+    cbind_split_data_vms <- mapply( cbind,split_data_vms,ndistance= ndistance_vms,nsurface=nsurface_vms , SIMPLIFY = F )
+    
+    # store data crs
+    data_crs <- "+init=epsg:4326 +proj=longlat +datum=WGS84"
+    
+    # extract geometry data for plot extend
+    geom_ais <- paste0("GEOMETRYCOLLECTION(",paste(dataset_ais$geom_wkt,collapse =","),")")
+    geom_vms <- paste0("GEOMETRYCOLLECTION(",paste(dataset_vms$geom_wkt,collapse =","),")")
+    sp_geom_ais <- readWKT(geom_ais)
+    sp_geom_vms <- readWKT(geom_vms)
+    sp_geom_all <- gUnion(sp_geom_ais,sp_geom_vms)
+    proj4string(sp_geom_all)=CRS(data_crs)
+    bbox_all <- gEnvelope(sp_geom_all)
+    bbox_extent_all <- bbox_all@bbox
+    latmin <- bbox_extent_all["y","min"]
+    latmax <- bbox_extent_all["y","max"]
+    lonmin <- bbox_extent_all["x","min"]
+    lonmax <- bbox_extent_all["x","max"]
+
+    all_period <- unique(c(names(split_data_ais),names(split_data_vms)))
+    
+    propNA<-NULL
+    for ( period in all_period){
+      # merge ais and vms data for a period
+      data <- merge(cbind_split_data_ais[[period]],cbind_split_data_vms[[period]], by=c("geom_wkt","time_start","time_end"), all=T, suffixes=c("_ais","_vms"))
+      
+      # calculte the differance between AIS and VMS data for normalize distance and normalize surface
+      data$diff_ndistance <- data$ndistance_vms-data$ndistance_ais
+      data$diff_nsurface <- data$nsurface_vms-data$nsurface_ais
+      data$na_ais <- is.na(data$ndistance_ais)
+      data$na_vms <- is.na(data$ndistance_vms)
+      data$na[which(data$na_ais==T & data$na_vms==F)] <- "AIS"
+      data$na[which(data$na_vms==T & data$na_ais==F)] <- "VMS"
+      data$na[which(data$na_vms==T & data$na_ais==T)] <- "AIS & VMS"
+      
+      # extract geometry data
+      geom <- paste0("GEOMETRYCOLLECTION(",paste(data$geom_wkt,collapse =","),")")
+      sp_geom <- readWKT(geom)
+      proj4string(sp_geom)=CRS(data_crs)
+      
+      ## pre-processing for ggplot
+      data$id = rownames(data)
+      data.poly = fortify(sp_geom, region="id")
+      data.df = join(data.poly, data, by="id")
+      
+      
+      ## proportion of NAs VMS:NAs AIS
+      propNA$gear<-gear[g]
+      propNA$year<-year[y]
+      propNA$Nais[period]<-length(which(data.df$na_ais==FALSE))
+      propNA$NAais[period]<-length(which(data.df$na_ais==TRUE))
+      propNA$Nvms[period]<-length(which(data.df$na_vms==FALSE))
+      propNA$NAvms[period]<-length(which(data.df$na_vms==TRUE))
+      propNA$propvms[period]<-(length(which(data.df$na_vms==TRUE))/(length(which(data.df$na_vms==TRUE))+length(which(data.df$na_vms==FALSE))))
+      propNA$propais[period]<-(length(which(data.df$na_ais==TRUE))/(length(which(data.df$na_ais==TRUE))+length(which(data.df$na_ais==FALSE))))
+      
+
+      ## extract min and max date
+      min_date <- min(as.Date(data$time_start))
+      max_date <- max(as.Date(data$time_end))
+      min_date_file_name <- str_replace_all(min_date, "-", "_")
+      max_date_file_name <- str_replace_all(max_date, "-", "_")
+      # 
+    }
+    propNA<-as.data.frame(propNA)
+    save(propNA,file=paste0('propNA_',gear[g],'_',year[y]))
+    print(paste0(year[y],' ',gear[g]))
+  }
+}
+
+propTOT<-NULL
+for(g in 1:2){
+  for(y in 1:2){
+load(paste('propNA',gear[g],year[y],sep='_'))
+
+propTOT<-rbind(propTOT,propNA)
+  }}
+
+propTOT$date<-rownames(propTOT)
+propTOT$date<-substr(propTOT$date,6,7)
+# propTOT$date<-rep(c(1:12),4)
+propTOT$gy<-paste0(propTOT$gear,propTOT$year)
+propTOT$ais_rep<-(1-propTOT$propais)
+propTOT$vms_rep<-(1-propTOT$propvms)
+
+# dd<-melt(propTOT)
+
+p<-ggplot(propTOT,aes(x=date,y=ais_rep,group=1))
+p<-p+geom_bar(stat='identity')+ylab('Proportion of full coverage')+facet_wrap(~gy,ncol=2)+
+  xlab('Months')
+p
+geom_bar(width=1,stat='identity')
+substr(propTOT,6,7)
+
+p <- ggplot(na.exclude(CPUE2plot), aes(x=Year, y=Obs))
+p <- p+geom_point(size=0.7,col='black')+geom_line(col='black')+geom_line(aes(y=Exp, colour=Model_run))+
+  facet_wrap(~Fleet,ncol=2,scales='free_y')#+ggtitle("CPUE fit: Observed v Predicted")#as.numeric(as.character(input$Run)))  
+ggplotly(p)
+
+plot(1:48,propTOT$propais,type='l',ylim=c(0,1))
+lines(1:48,propTOT$propvms,type='l',col='red')
+
