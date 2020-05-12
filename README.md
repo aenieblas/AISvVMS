@@ -32,31 +32,57 @@ The AIS-VMS-Logbook comparison of the Seychelles deep water tuna fleet includes 
     xii. NOTE: careful of the path to the AISdata
   
   b. Raw files filtered as of November 2018 include Seychelles long line data for 2016 and 2017 and purse seine data for 2016 and 2017.
-c. These data are then used for all subsequent analyses. They are saved into the current active directory as a .csv file with the appropriate name, e.g. LL2016_processed.csv, indicating the processed 2016 longline data. The values of what are removed/filtered that appear in the console should be noted to enter into the ‘fleet_coverage.R’ script (bullet point #3 below)
+
+  c. These data are then used for all subsequent analyses. They are saved into the current active directory as a .csv file with the appropriate name, e.g. LL2016_processed.csv, indicating the processed 2016 longline data. The values of what are removed/filtered that appear in the console should be noted to enter into the ‘fleet_coverage.R’ script (bullet point #3 below)
+
 2. Trajectory identification and aggregation
-a. These analyses are based on Chloe Dalleau’s scripts (https://github.com/cdalleau/geolocalisations_and_trajectories_aggregation)
-i. preprocessing_AIS1.R
-(1) Identifies trajectories and further filters AIS data
-(2) Final filtered AIS data frames with assigned trajectories to be exported and made available to SFA
-(3) Must change the “year” (2016, 2017) and “gear” (LL, PS, SV)
-ii. preprocessing_VMS1.R
-(1) Identifies trajectories
-(2) Final filtered VMS data frames with assigned trajectories to be exported and made available to SFA
-(3) Must change the “year” (2016, 2017) and “gear” (LL, PS, SV)
-iii. trajectory_aggregation.R for both VMS and AIS
-(1) Assigns trajectories to a grid,calculates the distance and surface area of trajectories, and aggregates data onto the grid.
-(2) Aggregated data frames to be exported and made available to SFA.
-iv. plot_comparison_AIS_VMS.R
-(1) Plots the aggregated trajectories, identifying where data are/not coincident, plots the distance and surface area of both VMS and AIS data, and plots a comparison/anomaly plot.
+
+  a. These analyses are based on Chloe Dalleau’s scripts (https://github.com/cdalleau/geolocalisations_and_trajectories_aggregation)
+
+    i. preprocessing_AIS1.R
+
+    
+      (1) Identifies trajectories and further filters AIS data
+    
+      (2) Final filtered AIS data frames with assigned trajectories to be exported and made available to SFA
+    
+      (3) Must change the “year” (2016, 2017) and “gear” (LL, PS, SV)
+    
+    ii. preprocessing_VMS1.R
+
+      (1) Identifies trajectories
+
+      (2) Final filtered VMS data frames with assigned trajectories to be exported and made available to SFA
+
+      (3) Must change the “year” (2016, 2017) and “gear” (LL, PS, SV)
+
+    iii. trajectory_aggregation.R for both VMS and AIS
+
+      (1) Assigns trajectories to a grid,calculates the distance and surface area of trajectories, and aggregates data onto the grid.
+  
+      (2) Aggregated data frames to be exported and made available to SFA.
+
+    iv. plot_comparison_AIS_VMS.R
+      
+      (1) Plots the aggregated trajectories, identifying where data are/not coincident, plots the distance and surface area of both VMS and AIS data, and plots a comparison/anomaly plot.
+
 3. Summary figures/statistics
-a. fleet_coverage.R
-i. This script creates a figure summarising the values of what was filtered/removed from the raw data, as defined in the first step.
-b. density_map_pings_VMSvAIS.R
-i. A density map of where there are AIS and VMS records
-c. compiled_AIS_NA_maps.R
-i. This script finds the proportion of time that AIS data are available in the cell over the entire year. This gives a metric for AIS data coverage. 
-d. Indi_dist.R
-i. comparing the differences in the distances/lengths of individual trajectories between AIS and VMS data (Figure 9 of the Atlas chapter)
+  
+  a. fleet_coverage.R
+
+    i. This script creates a figure summarising the values of what was filtered/removed from the raw data, as defined in the first step.
+
+  b. density_map_pings_VMSvAIS.R
+
+    i. A density map of where there are AIS and VMS records
+
+  c. compiled_AIS_NA_maps.R
+
+    i. This script finds the proportion of time that AIS data are available in the cell over the entire year. This gives a metric for AIS data coverage. 
+
+  d. Indi_dist.R
+
+    i. comparing the differences in the distances/lengths of individual trajectories between AIS and VMS data (Figure 9 of the Atlas chapter)
 
 
 
