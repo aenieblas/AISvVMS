@@ -5,20 +5,20 @@ The AIS-VMS-Logbook comparison of the Seychelles deep water tuna fleet includes 
 3) comparisons to the GFW-AIS fishing algorithm.
 
 1. Filtering/preprocessing the raw VMS, AIS, and logbook data: process_meta_total.R
-a. This script sources the preprocessing_all.R script which is itself numerous functions to filter the data, including:
-i. dataset_prep  <- standardized column names and date/time formats
-ii. vessel_match <- matches vessel names to vessel map names
-iii. mmsi_match   <- matches vessel map names to mmsi
-iv. overland         <- removes points over land
-v. remove_ports <- removes points x meters buffer around a port, defaults to 10000 m buffer, i.e. 10 km
-vi. doop_check   <- searches each column of a data frame, except those defined by 'column_list'. finds and removes duplicate rows
-vii. speed_check  <- calculates speed and removes the points over a threshold. (max speed per gear), and distances too close (default = 5 m)
-viii. check_plot     <- plots the original points with the remaining points overlaid on a map, including ports (green)
-ix. processing_metascript <- metascript for VMS and LOG that calls filter scripts i-viii.
-x. processing_AIS <- metascript for individual AIS files that calls filter scripts i-viii. 
-xi. create_ais_dataframe <- make a dataframe by combining (via rbind) all the individual AIS files.
-xii. NOTE: careful of the path to the AISdata
-b. Raw files filtered as of November 2018 include Seychelles long line data for 2016 and 2017 and purse seine data for 2016 and 2017.
+  a. This script sources the preprocessing_all.R script which is itself numerous functions to filter the data, including:
+    i. dataset_prep  <- standardized column names and date/time formats
+    ii. vessel_match <- matches vessel names to vessel map names
+    iii. mmsi_match   <- matches vessel map names to mmsi
+    iv. overland         <- removes points over land
+    v. remove_ports <- removes points x meters buffer around a port, defaults to 10000 m buffer, i.e. 10 km
+    vi. doop_check   <- searches each column of a data frame, except those defined by 'column_list'. finds and removes duplicate rows
+    vii. speed_check  <- calculates speed and removes the points over a threshold. (max speed per gear), and distances too close (default = 5 m)
+    viii. check_plot     <- plots the original points with the remaining points overlaid on a map, including ports (green)
+    ix. processing_metascript <- metascript for VMS and LOG that calls filter scripts i-viii.
+    x. processing_AIS <- metascript for individual AIS files that calls filter scripts i-viii. 
+    xi. create_ais_dataframe <- make a dataframe by combining (via rbind) all the individual AIS files.
+    xii. NOTE: careful of the path to the AISdata
+  b. Raw files filtered as of November 2018 include Seychelles long line data for 2016 and 2017 and purse seine data for 2016 and 2017.
 c. These data are then used for all subsequent analyses. They are saved into the current active directory as a .csv file with the appropriate name, e.g. LL2016_processed.csv, indicating the processed 2016 longline data. The values of what are removed/filtered that appear in the console should be noted to enter into the ‘fleet_coverage.R’ script (bullet point #3 below)
 2. Trajectory identification and aggregation
 a. These analyses are based on Chloe Dalleau’s scripts (https://github.com/cdalleau/geolocalisations_and_trajectories_aggregation)
