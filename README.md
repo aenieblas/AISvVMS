@@ -29,10 +29,8 @@ The AIS-VMS-Logbook comparison of the Seychelles deep water tuna fleet includes 
     
     xi. create_ais_dataframe <- make a dataframe by combining (via rbind) all the individual AIS files.
     
-    xii. NOTE: careful of the path to the AISdata
-  
+    xii. NOTE: careful of the path to the AISdata 
   b. Raw files filtered as of November 2018 include Seychelles long line data for 2016 and 2017 and purse seine data for 2016 and 2017.
-
   c. These data are then used for all subsequent analyses. They are saved into the current active directory as a .csv file with the appropriate name, e.g. LL2016_processed.csv, indicating the processed 2016 longline data. The values of what are removed/filtered that appear in the console should be noted to enter into the ‘fleet_coverage.R’ script (bullet point #3 below)
 
 2. Trajectory identification and aggregation
